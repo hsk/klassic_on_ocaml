@@ -12,6 +12,7 @@ type value =
   | NativeFunctionValue of (value list -> value)
   | UnitValue
 (*| ObjectValue of anyRef*)
+  | ListValue of value list
 and environment = Environment of (string * value) list ref * environment option
 
 let rec show = function
@@ -29,6 +30,7 @@ let rec show = function
   | NativeFunctionValue(body) -> "native function"
   | UnitValue -> "()"
 (*| ObjectValue(value) -> value.toString*)
+  | ListValue(vs) -> "[" ^ String.concat ", " (List.map show vs) ^ "]"
 and show_env = function
   | Environment(vs, parent) ->
     Printf.sprintf "Environment(Map(%s))"
