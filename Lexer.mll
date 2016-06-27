@@ -74,9 +74,25 @@ rule token = parse
 | "?"       { QUES         }
 | "&&"      { AMP2         }
 | "||"      { BAR2         }
-| digit+    { INT(int_of_string (Lexing.lexeme lexbuf)) }
-| digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)?
-            { FLOAT(float_of_string (Lexing.lexeme lexbuf)) }
+| (['1'-'9']['0'-'9']*|'0') "BY" { BYTE (int_of_string (Lexing.lexeme lexbuf)) }
+| (['1'-'9']['0'-'9']*|'0') "L"  { LONG (int_of_string (Lexing.lexeme lexbuf)) }
+| (['1'-'9']['0'-'9']*|'0') "S"  { SHORT(int_of_string (Lexing.lexeme lexbuf)) }
+| (['1'-'9']['0'-'9']*|'0')      { INT  (int_of_string (Lexing.lexeme lexbuf)) }
+| digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)? 'F' { FLOAT(float_of_string (Lexing.lexeme lexbuf)) }
+| digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)? { DOUBLE(float_of_string (Lexing.lexeme lexbuf)) }
+| '"' (([^ '"' '\\'] | '\\' ['r' 'n' 't' 'f' 'b' '"' '\'' '\\'] )* as s) '"' {  STRING s }
+
+(* stringLiteral ::= "\"" ((?!")(\[rntfb"'\\]|[^\\]))* "\"" *)
+(*
+stringLiteral :    |
+  "\""
+    ( ( (?!("|#\{))(\\[rntfb"'\\]|[^\\]))+ {  StringNode(location(), unescape($1)) } | "#{" expression "}"
+    )*
+  "\"" SPACING_WITHOUT_LF {
+  $1.foldLeft(StringNode(NoLocation, "")) { (node, content) => BinaryExpression(content.location, Operator.ADD, node, content) }
+}
+*)
+
 | eof       { EOF }
 | ['A'-'Z' 'a'-'z' '_']['a'-'z' 'A'-'Z' '0'-'9']*
             { IDENT(Lexing.lexeme lexbuf) }
